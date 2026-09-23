@@ -1,0 +1,44 @@
+name: e-wallet
+services:
+  db:
+    image: postgres:14.6-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${db_name}
+      POSTGRES_USER: ${db_username}
+      POSTGRES_PASSWORD: ${db_password}
+    ports:
+      - '5433:5432'
+    volumes:
+      - ewallet_postgres_data:/var/lib/postgresql/data
+    networks: [ewallet_network]
+
+  backend:
+    build: ./backend
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${db_name}
+      SPRING_DATASOURCE_USERNAME: ${db_username}
+      SPRING_DATASOURCE_PASSWORD: ${db_password}
+      db_name: ${db_name}
+      db_username: ${db_username}
+      db_password: ${db_password}
+      jwt_secret: ${jwt_secret}
+    ports:
+      - '8081:8080'
+    depends_on: [db]
+    networks: [ewallet_network]
+
+  frontend:
+    build: ./frontend
+    restart: always
+    ports:
+      - '3001:3000'
+    depends_on: [backend]
+    networks: [ewallet_network]
+
+volumes:
+  ewallet_postgres_data:
+
+networks:
+  ewallet_network:
